@@ -10,7 +10,6 @@ import queue
 from collections import deque, defaultdict
 from flask import Flask, Response, send_from_directory
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
 import os
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
