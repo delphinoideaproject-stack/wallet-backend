@@ -8,6 +8,8 @@ import json
 from collections import deque, defaultdict
 from flask import Flask, Response
 from flask_cors import CORS
+from flask import send_from_directory
+import os
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 import hashlib
@@ -264,6 +266,10 @@ def event_stream():
 @app.route('/stream')
 def stream():
     return Response(event_stream(), mimetype="text/event-stream")
+
+@app.route("/")
+def home():
+    return send_from_directory("frontend", "index.html")
 
 @app.route('/health')
 def health():
