@@ -1,7 +1,10 @@
 flask==2.3.3
 flask-cors==4.0.0
+flask-socketio==5.3.6
+python-socketio==5.10.0
 web3==6.11.1
 setuptools
 wheel
 redis==5.0.1
 msgpack==1.0.7
+eventlet==0.33.3
