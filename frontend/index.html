@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TRUE DEX PRO • MATCHA/USD</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #080b0f;
+    --surface:  #0e1218;
+    --surface2: #141b24;
+    --border:   rgba(56,189,248,0.10);
+    --border2:  rgba(56,189,248,0.18);
+    --green:    #00e5a0;
+    --red:      #ff4d6a;
+    --amber:    #fbbf24;
+    --blue:     #38bdf8;
+    --muted:    #4a6070;
+    --text:     #d4e4f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    padding: 10px 10px 24px;
+    min-height: 100vh;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0 14px;
+  }
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--blue);
+    text-transform: uppercase;
+  }
+  .live-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.25);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px; font-weight: 600; color: var(--green);
+    letter-spacing: 1px;
+  }
+  .dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation: blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .card-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .pair-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--muted); letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .price-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .price-main {
+    font-family: 'Space Mono', monospace;
+    font-size: 38px; font-weight: 700; line-height: 1;
+    color: #fff; letter-spacing: -1px;
+  }
+  .badge-change {
+    font-size: 14px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .badge-change.up   { color: var(--green); background: rgba(0,229,160,0.12); }
+  .badge-change.down { color: var(--red);   background: rgba(255,77,106,0.12); }
+  .change-1m { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  .metrics-row { display: flex; gap: 8px; margin-top: 12px; }
+  .metric {
+    flex: 1; background: var(--surface2);
+    border-radius: 14px; padding: 10px 10px 9px;
+    text-align: center;
+    border: 1px solid var(--border);
+    min-width: 0;
+  }
+  .metric .lbl { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .metric .val { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; margin-top: 4px; }
+  .signal-row { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+  .signal-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; font-weight: 700;
+    padding: 7px 20px; border-radius: 40px;
+    letter-spacing: 1.5px;
+  }
+  .signal-badge.green  { background: var(--green); color: #000; }
+  .signal-badge.red    { background: var(--red);   color: #fff; }
+  .signal-badge.neutral{ background: var(--amber); color: #000; }
+  .rsi-label { font-size: 11px; color: var(--muted); }
+  .depth-wrap { display: flex; gap: 6px; align-items: center; margin-top: 12px; }
+  .depth-bar-track { flex:1; background: var(--surface2); border-radius: 10px; height: 8px; overflow: hidden; }
+  .depth-bid-fill { background: var(--green); height: 100%; border-radius: 10px; transition: width 0.4s ease; }
+  .depth-ask-fill { background: var(--red);   height: 100%; border-radius: 10px; transition: width 0.4s ease; }
+  .depth-label { font-size: 9px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+  .tf-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tf-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    padding: 5px 14px; border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tf-btn:hover { color: var(--blue); border-color: var(--blue); }
+  .tf-btn.active {
+    background: var(--blue); color: #000;
+    border-color: var(--blue);
+  }
+  #chart-container { width: 100%; height: 290px; border-radius: 12px; overflow: hidden; }
+  .tx-list { max-height: 250px; overflow-y: auto; }
+  .tx-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 9px 12px;
+    margin-bottom: 6px; font-size: 11px;
+    gap: 8px;
+  }
+  .tx-item.whale { border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.06); }
+  .tx-dir { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; min-width: 40px; }
+  .tx-dir.buy  { color: var(--green); }
+  .tx-dir.sell { color: var(--red); }
+  .tx-sub { color: var(--muted); font-size: 9.5px; margin-top: 2px; }
+  .tx-amt { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12px; text-align: right; }
+  .whale-tag {
+    font-size: 9px; font-weight: 700; padding: 2px 7px;
+    background: var(--amber); color: #000; border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+  .two-col { display: flex; gap: 10px; }
+  .two-col > div { flex: 1; min-width: 0; }
+  .rank-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-num { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 10px; margin-right: 6px; }
+  .connection-status {
+    position: fixed; bottom: 10px; right: 10px;
+    font-size: 9px; padding: 4px 8px;
+    background: var(--surface2); border-radius: 10px;
+    color: var(--muted);
+    z-index: 1000;
+  }
+  .connection-status.connected { color: var(--green); }
+  .connection-status.disconnected { color: var(--red); }
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 10px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">⬡ TRUE DEX PRO</span>
+    <div class="live-pill"><div class="dot"></div>LIVE</div>
+  </div>
+  
+  <div class="card">
+    <div class="pair-label">USD / MATCHA</div>
+    <div class="price-row">
+      <div class="price-main" id="price">$0.00000000</div>
+      <span class="badge-change up" id="priceChange">▲ 0.00%</span>
+    </div>
+    <div class="change-1m" id="change1m">1m: ▲ 0.00%</div>
+    <div class="metrics-row">
+      <div class="metric"><div class="lbl">24H HIGH</div><div class="val" id="high24">—</div></div>
+      <div class="metric"><div class="lbl">24H LOW</div><div class="val" id="low24">—</div></div>
+      <div class="metric"><div class="lbl">RSI 14</div><div class="val" id="rsi">—</div></div>
+      <div class="metric"><div class="lbl">TVL</div><div class="val" id="tvl">$0</div></div>
+    </div>
+    <div class="signal-row">
+      <span class="signal-badge neutral" id="signalBadge">NEUTRAL</span>
+      <span class="rsi-label">Buy pressure: <span id="pressureVal">0</span></span>
+    </div>
+    <div class="depth-wrap">
+      <div style="flex:1">
+        <div class="depth-bar-track"><div class="depth-bid-fill" id="bidDepth" style="width:50%"></div></div>
+        <div class="depth-label">BUY DEPTH</div>
+      </div>
+      <div style="flex:1">
+        <div class="depth-bar-track"><div class="depth-ask-fill" id="askDepth" style="width:50%"></div></div>
+        <div class="depth-label">SELL DEPTH</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card" style="padding-bottom:16px;">
+    <div class="tf-tabs">
+      <button class="tf-btn active" data-tf="1s">1s</button>
+      <button class="tf-btn" data-tf="5s">5s</button>
+      <button class="tf-btn" data-tf="15s">15s</button>
+      <button class="tf-btn" data-tf="1m">1m</button>
+    </div>
+    <div id="chart-container"></div>
+  </div>
+  
+  <div class="card">
+    <div class="metrics-row" style="margin-top:0;">
+      <div class="metric">
+        <div class="lbl">BUY VOL</div>
+        <div class="val" style="color:var(--green)" id="buyVol">$0</div>
+      </div>
+      <div class="metric">
+        <div class="lbl">SELL VOL</div>
+        <div class="val" style="color:var(--red)" id="sellVol">$0</div>
+      </div>
+      <div class="metric">
+        <div class="lbl">B/S RATIO</div>
+        <div class="val" id="ratio">—</div>
+      </div>
+      <div class="metric">
+        <div class="lbl">LIQUIDITY</div>
+        <div class="val" id="liquidity">$0</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-label">Live Transactions <span id="txCount" style="color:var(--blue);"></span></div>
+    <div class="tx-list" id="transactions"></div>
+  </div>
+  
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <div class="card-label">🐋 Top Whales</div>
+        <div id="whales"></div>
+      </div>
+      <div>
+        <div class="card-label">🏆 Top Traders</div>
+        <div id="topTraders"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="connection-status" id="connStatus">⚡ Connecting...</div>
+
+<script>
+// 🔧 GANTI URL INI dengan Railway backend lo setelah deploy!
+const BACKEND_URL = "https://your-app.railway.app";  // <-- GANTI INI
+
+let chart, candleSeries;
+let activeTf = '1s';
+let lastCandles = null;
+
+function initChart() {
+  const chartEl = document.getElementById('chart-container');
+  chart = LightweightCharts.createChart(chartEl, {
+    width: chartEl.clientWidth,
+    height: 290,
+    layout: {
+      background: { type: 'solid', color: '#0e1218' },
+      textColor: '#4a6070',
+    },
+    grid: {
+      vertLines: { color: 'rgba(56,189,248,0.06)' },
+      horzLines: { color: 'rgba(56,189,248,0.06)' },
+    },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: '#141b24', minimumWidth: 80 },
+    timeScale: {
+      borderColor: '#141b24',
+      timeVisible: true,
+      secondsVisible: true,
+      tickMarkFormatter: (t) => {
+        const d = new Date(t * 1000);
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mm = String(d.getMinutes()).padStart(2,'0');
+        const ss = String(d.getSeconds()).padStart(2,'0');
+        return `${hh}:${mm}:${ss}`;
+      }
+    },
+    handleScroll: true,
+    handleScale: true,
+  });
+  
+  candleSeries = chart.addCandlestickSeries({
+    upColor:         '#00e5a0',
+    downColor:       '#ff4d6a',
+    borderUpColor:   '#00e5a0',
+    borderDownColor: '#ff4d6a',
+    wickUpColor:     '#00e5a0',
+    wickDownColor:   '#ff4d6a',
+    priceFormat: {
+      type: 'price',
+      precision: 8,
+      minMove: 0.00000001,
+    },
+  });
+  
+  window.addEventListener('resize', () => {
+    chart.applyOptions({ width: chartEl.clientWidth });
+  });
+}
+
+initChart();
+
+document.querySelectorAll('.tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTf = btn.dataset.tf;
+    if (lastCandles && lastCandles[activeTf]) {
+      candleSeries.setData(lastCandles[activeTf]);
+      chart.timeScale().scrollToRealTime();
+    }
+  });
+});
+
+const connStatus = document.getElementById('connStatus');
+const es = new EventSource(`${BACKEND_URL}/stream`);
+
+es.onopen = () => {
+  connStatus.className = 'connection-status connected';
+  connStatus.innerHTML = '✅ Live';
+};
+
+es.onerror = () => {
+  connStatus.className = 'connection-status disconnected';
+  connStatus.innerHTML = '⚠️ Reconnecting...';
+  setTimeout(() => {
+    window.location.reload();
+  }, 5000);
+};
+
+es.onmessage = e => {
+  try {
+    const msg = JSON.parse(e.data);
+    if (msg.type !== 'state') return;
+    const s = msg.data;
+    
+    document.getElementById('price').textContent = '$' + s.price.toFixed(8);
+    
+    const up = s.price_change >= 0;
+    const pcEl = document.getElementById('priceChange');
+    pcEl.textContent = (up ? '▲ ' : '▼ ') + Math.abs(s.price_change).toFixed(2) + '%';
+    pcEl.className = 'badge-change ' + (up ? 'up' : 'down');
+    
+    const c1El = document.getElementById('change1m');
+    const c1up = s.change_1m >= 0;
+    c1El.textContent = '1m: ' + (c1up ? '▲ ' : '▼ ') + Math.abs(s.change_1m).toFixed(2) + '%';
+    c1El.style.color = c1up ? 'var(--green)' : 'var(--red)';
+    
+    document.getElementById('high24').textContent = '$' + s.high_24h.toFixed(6);
+    document.getElementById('low24').textContent = '$' + s.low_24h.toFixed(6);
+    document.getElementById('rsi').textContent = s.rsi;
+    document.getElementById('tvl').textContent = '$' + Math.round(s.tvl).toLocaleString();
+    document.getElementById('pressureVal').textContent = s.pressure;
+    document.getElementById('liquidity').textContent = '$' + Math.round(s.liquidity).toLocaleString();
+    document.getElementById('buyVol').textContent = '$' + Math.round(s.buy_vol_24h).toLocaleString();
+    document.getElementById('sellVol').textContent = '$' + Math.round(s.sell_vol_24h).toLocaleString();
+    
+    const ratio = s.sell_vol_24h > 0 ? (s.buy_vol_24h / s.sell_vol_24h) : 0;
+    const rEl = document.getElementById('ratio');
+    rEl.textContent = ratio.toFixed(2) + 'x';
+    rEl.style.color = ratio >= 1 ? 'var(--green)' : 'var(--red)';
+    
+    const sb = document.getElementById('signalBadge');
+    sb.textContent = s.signal;
+    sb.className = 'signal-badge ' + s.signal_color;
+    
+    document.getElementById('bidDepth').style.width = s.bid_depth + '%';
+    document.getElementById('askDepth').style.width = s.ask_depth + '%';
+    
+    if (s.candles) {
+      lastCandles = s.candles;
+      const data = s.candles[activeTf];
+      if (data && data.length > 0) {
+        candleSeries.setData(data);
+      }
+    }
+    
+    if (s.transactions && s.transactions.length) {
+      document.getElementById('txCount').textContent = `(${s.transactions.length})`;
+      document.getElementById('transactions').innerHTML = s.transactions.slice(0, 30).map(tx => `
+        <div class="tx-item ${tx.is_whale ? 'whale' : ''}">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="tx-dir ${tx.direction === 'BUY' ? 'buy' : 'sell'}">${tx.direction === 'BUY' ? '▲' : '▼'} ${tx.direction}</span>
+              ${tx.is_whale ? '<span class="whale-tag">WHALE</span>' : ''}
+            </div>
+            <div class="tx-sub">${tx.wallet} · $${tx.price.toFixed(8)}</div>
+          </div>
+          <div class="tx-amt" style="color:${tx.direction==='BUY'?'var(--green)':'var(--red)'}">
+            $${tx.usd_amount.toFixed(2)}
+            <div style="font-size:9px;color:var(--muted);font-weight:400;">${tx.mtc_amount} MATCHA</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    if (s.whales && s.whales.length) {
+      document.getElementById('whales').innerHTML = s.whales.slice(0,5).map((w,i) => `
+        <div class="rank-item">
+          <div><span class="rank-num">#${i+1}</span>${w.wallet}</div>
+          <span style="color:var(--amber);font-family:'Space Mono',monospace;font-size:11px;">$${w.volume.toLocaleString()}</span>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('whales').innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px 0">No data yet</div>';
+    }
+    
+    if (s.top_traders && s.top_traders.length) {
+      document.getElementById('topTraders').innerHTML = s.top_traders.slice(0,5).map((t,i) => `
+        <div class="rank-item">
+          <div><span class="rank-num">#${i+1}</span>${t.wallet}</div>
+          <div style="text-align:right;">
+            <div style="color:var(--blue);font-family:'Space Mono',monospace;font-size:11px;">$${t.volume.toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--muted);">${t.trades} tx</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('topTraders').innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px 0">No data yet</div>';
+    }
+  } catch (err) {
+    console.error('Parse error:', err);
+  }
+};
+</script>
+</body>
+</html>
